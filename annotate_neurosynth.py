@@ -40,7 +40,7 @@ dset.save(os.path.join(out_dir, 'neurosynth_dataset.pkl.gz'))
     - ...
 """
 #dset = Dataset.load(os.path.join(out_dir, 'neurosynth_dataset.pkl.gz'))
-title = []
+
 topics='v5topic200'
 for topic in range(200):
     files = glob.glob(os.path.join(out_dir,topics, 'Neurosynth_v5topic200_topic{:03d}_*.htm'.format(topic)))
