@@ -88,4 +88,4 @@ for topic in range(200):
     # Add annotation to Dataset and save to file
     dset.annotations['Neurosynth_{}__topic{:03d}'.format(topics,topic)] = ids_colum 
 
-dset.save(os.path.join(out_dir, 'neurosynth_dataset_annotation_test.pkl.gz'))
+dset.save(os.path.join(out_dir, 'neurosynth_dataset_annotation.pkl.gz'))
