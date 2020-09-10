@@ -59,25 +59,27 @@ for topic in range(200):
     
     # Find by title
     #title = []
-    topic_ids = []
+    nimare_ids_weight = {}
     for file in files:
         with open(file) as html_topic:
             soup_topic = BeautifulSoup(html_topic, 'lxml')
 
-        studies = soup_topic.find('div', class_='row').find('div', class_='row').find(
-            'div', class_='col-md-10 content').find('div', class_='tab-content').find('div', id='studies').table.tbody.find_all('a')
+        studies_table = soup_topic.find('div', class_='row').find('div', class_='row').find(
+            'div', class_='col-md-10 content').find('div', class_='tab-content').find('div', id='studies').table.tbody
+        studies = studies_table.find_all('a')
+        weights = studies_table.find_all('td', class_='sorting_1')
 
-        for study in studies:
-            topic_ids.append(study['href'].split('/')[4])
+        for i, study in enumerate(studies):
+            expid = '1'
+            pid = study['href'].split('/')[4]
+            nimare_ids_weight["{0}-{1}".format(pid, expid)] = weights[i].text
             #title.append(study.text)
-    
-    expid = '1'
-    nimare_ids = ["{0}-{1}".format(pid, expid) for pid in topic_ids]
 
-    found_ids = np.isin(dset.ids, nimare_ids)
+    found_ids = np.isin(dset.ids, list(nimare_ids_weight.keys()))
     #found_ids = dset.metadata['title'].isin(title)
     ids_colum = np.zeros(len(dset.ids))
-    ids_colum[found_ids]=1
+    topic_weights = [nimare_ids_weight[id] for id in dset.ids[found_ids]]
+    ids_colum[found_ids] = topic_weights
 
     nonzero = ids_colum[ids_colum != 0]
     # doble check that all the studies are in the dataset and match the number of studies reported on https://neurosynth.org/analyses/topics/v5-topics-200/
