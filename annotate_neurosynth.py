@@ -22,8 +22,8 @@ dset = nimare.io.convert_neurosynth_to_dataset(
 dset.save(os.path.join(out_dir, 'neurosynth_dataset.pkl.gz'))
 
 """
- Due to bandwidth limitations, the web interface (https://neurosynth.org/) is not intended to support 
- mass downloading of hundreds or thousands of images, and attempts to scrape content in an automated 
+ Due to bandwidth limitations, the web interface (https://neurosynth.org/) is not intended to support
+ mass downloading of hundreds or thousands of images, and attempts to scrape content in an automated
  way will result in permanent IP bans.
  Source: check Data from https://neurosynth.org/code/
 
@@ -41,11 +41,12 @@ dset.save(os.path.join(out_dir, 'neurosynth_dataset.pkl.gz'))
 """
 #dset = Dataset.load(os.path.join(out_dir, 'neurosynth_dataset.pkl.gz'))
 
-topics='v5topic200'
+topics = 'v5topic200'
 for topic in range(200):
-    files = glob.glob(os.path.join(out_dir,topics, 'Neurosynth_v5topic200_topic{:03d}_*.htm'.format(topic)))
+    files = glob.glob(os.path.join(
+        out_dir, topics, 'Neurosynth_v5topic200_topic{:03d}_*.htm'.format(topic)))
     files.sort()
-    n_topics = glob.glob(os.path.join(out_dir,topics, 'Neurosynth_v5topic200_*_topics.htm'))
+    n_topics = glob.glob(os.path.join(out_dir, topics, 'Neurosynth_v5topic200_*_topics.htm'))
     n_topics.sort()
 
     # find the number of studies by topic to perform a final check
@@ -53,10 +54,12 @@ for topic in range(200):
     for n_topic in n_topics:
         with open(n_topic) as html_topics:
             soup_topics = BeautifulSoup(html_topics, 'lxml')
-        studies_table = soup_topics.find('div', class_='row').find('div', class_='col-md-12 content').find_all('td')
+        studies_table = soup_topics.find('div', class_='row').find(
+            'div', class_='col-md-12 content').find_all('td')
 
-        [n_studies.append(int(studies_table[idx*3+2].text)) for idx in range(int(len(studies_table)/3))]   
-    
+        [n_studies.append(int(studies_table[idx*3+2].text))
+         for idx in range(int(len(studies_table)/3))]
+
     # Find by title
     #title = []
     nimare_ids_weight = {}
@@ -73,7 +76,7 @@ for topic in range(200):
             expid = '1'
             pid = study['href'].split('/')[4]
             nimare_ids_weight["{0}-{1}".format(pid, expid)] = weights[i].text
-            #title.append(study.text)
+            # title.append(study.text)
 
     found_ids = np.isin(dset.ids, list(nimare_ids_weight.keys()))
     #found_ids = dset.metadata['title'].isin(title)
@@ -84,10 +87,11 @@ for topic in range(200):
     nonzero = ids_colum[ids_colum != 0]
     # doble check that all the studies are in the dataset and match the number of studies reported on https://neurosynth.org/analyses/topics/v5-topics-200/
     if len(nonzero) != n_studies[topic]:
-        print('Only {} out of {} studies found in topic {} from {}'.format(len(nonzero),n_studies[topic],topic,topics))
+        print('Only {} out of {} studies found in topic {} from {}'.format(
+            len(nonzero), n_studies[topic], topic, topics))
         print('Check local html file')
 
     # Add annotation to Dataset and save to file
-    dset.annotations['Neurosynth_{}__topic{:03d}'.format(topics,topic)] = ids_colum 
+    dset.annotations['Neurosynth_{}__topic{:03d}'.format(topics, topic)] = ids_colum
 
 dset.save(os.path.join(out_dir, 'neurosynth_dataset_annotation.pkl.gz'))
