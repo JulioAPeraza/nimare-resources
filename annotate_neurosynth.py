@@ -57,9 +57,9 @@ for topic in range(200):
 
         [n_studies.append(int(studies_table[idx*3+2].text)) for idx in range(int(len(studies_table)/3))]   
     
-    #topic_ids = []
     # Find by title
-    title = []
+    #title = []
+    topic_ids = []
     for file in files:
         with open(file) as html_topic:
             soup_topic = BeautifulSoup(html_topic, 'lxml')
@@ -68,21 +68,24 @@ for topic in range(200):
             'div', class_='col-md-10 content').find('div', class_='tab-content').find('div', id='studies').table.tbody.find_all('a')
 
         for study in studies:
-            #topic_ids.append(study['href'].split('/')[4])
-            title.append(study.text)
+            topic_ids.append(study['href'].split('/')[4])
+            #title.append(study.text)
+    
+    expid = '1'
+    nimare_ids = ["{0}-{1}".format(pid, expid) for pid in topic_ids]
 
-    #if len(topic_ids) != n_studies[topic]:
-    if len(title) != n_studies[topic]:
-        #print('Only {} out of {} studies found in topic {} from {}'.format(len(topic_ids),n_studies[topic],topic,topics))
-        print('Only {} out of {} studies found in topic {} from {}'.format(len(title),n_studies[topic],topic,topics))
-        print('Check local html file')
-
-    #found_ids = dset.ids.isin(topic_ids)
-    found_ids = dset.metadata['title'].isin(title)
+    found_ids = np.isin(dset.ids, nimare_ids)
+    #found_ids = dset.metadata['title'].isin(title)
     ids_colum = np.zeros(len(dset.ids))
     ids_colum[found_ids]=1
+
+    nonzero = ids_colum[ids_colum != 0]
+    # doble check that all the studies are in the dataset and match the number of studies reported on https://neurosynth.org/analyses/topics/v5-topics-200/
+    if len(nonzero) != n_studies[topic]:
+        print('Only {} out of {} studies found in topic {} from {}'.format(len(nonzero),n_studies[topic],topic,topics))
+        print('Check local html file')
 
     # Add annotation to Dataset and save to file
     dset.annotations['Neurosynth_{}__topic{:03d}'.format(topics,topic)] = ids_colum 
 
-dset.save(os.path.join(out_dir, 'neurosynth_dataset_annotation.pkl.gz'))
+dset.save(os.path.join(out_dir, 'neurosynth_dataset_annotation_test.pkl.gz'))
