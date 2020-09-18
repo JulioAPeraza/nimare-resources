@@ -22,10 +22,10 @@
 """
 import glob
 import os
-import nimare
 import numpy as np
 from bs4 import BeautifulSoup
 from neurosynth.base.dataset import download
+from nimare.io import convert_neurosynth_to_dataset
 
 # Download Neurosynth
 out_dir = os.path.abspath('/Users/jperaza/Desktop/neurosynth/')
@@ -36,31 +36,31 @@ if not os.path.isfile(os.path.join(out_dir, 'database.txt')):
     download(out_dir, unpack=True)
 
 # Convert Neurosynth database files to NiMARE Dataset
-dset = nimare.io.convert_neurosynth_to_dataset(
+dset = convert_neurosynth_to_dataset(
     os.path.join(out_dir, 'database.txt'),
     os.path.join(out_dir, 'features.txt'))
 
 dset.save(os.path.join(out_dir, 'neurosynth_dataset.pkl.gz'))
 
 TOPICS = 'v5topic200'
+# Find the number of studies by topic to perform a final check
+n_topics = glob.glob(os.path.join(
+    out_dir, TOPICS, 'Neurosynth_v5topic200_*_topics.htm'))
+n_topics.sort()
+n_studies = []
+for n_topic in n_topics:
+    with open(n_topic) as html_topics:
+        soup_topics = BeautifulSoup(html_topics, 'lxml')
+    topics_table = soup_topics.find('div', class_='row').find(
+        'div', class_='col-md-12 content').find_all('td')
+
+    [n_studies.append(int(topics_table[idx*3+2].text))
+        for idx in range(int(len(topics_table)/3))]
+
 for topic in range(200):
     files = glob.glob(os.path.join(
         out_dir, TOPICS, 'Neurosynth_v5topic200_topic{:03d}_*.htm'.format(topic)))
     files.sort()
-    n_topics = glob.glob(os.path.join(
-        out_dir, TOPICS, 'Neurosynth_v5topic200_*_topics.htm'))
-    n_topics.sort()
-
-    # Find the number of studies by topic to perform a final check
-    n_studies = []
-    for n_topic in n_topics:
-        with open(n_topic) as html_topics:
-            soup_topics = BeautifulSoup(html_topics, 'lxml')
-        studies_table = soup_topics.find('div', class_='row').find(
-            'div', class_='col-md-12 content').find_all('td')
-
-        [n_studies.append(int(studies_table[idx*3+2].text))
-         for idx in range(int(len(studies_table)/3))]
 
     nimare_ids_weight = {}
     for file in files:
@@ -95,4 +95,4 @@ for topic in range(200):
     dset.annotations['Neurosynth_{}__topic{:03d}'.format(
         TOPICS, topic)] = ids_colum
 
-dset.save(os.path.join(out_dir, 'neurosynth_dataset_annotation_test.pkl.gz'))
+dset.save(os.path.join(out_dir, 'neurosynth_dataset_annotation.pkl.gz'))
